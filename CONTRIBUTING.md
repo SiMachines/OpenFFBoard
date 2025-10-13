@@ -22,6 +22,9 @@ A tagged commit (v1.x.x) will trigger an automatic release. A tag with a "-" (v1
 
 A release is triggered when changes are deemed ready for public use.
 
+#### Manual firmware build with release
+You can manually trigger a firmware build from the Actions tab. When triggering the "Build OpenFFBoard firmware" workflow, you have the option to "Create a release after building". If set to 'true', a prerelease will be automatically created with the firmware artifacts after the build completes.
+
 ### Submodules
 The configurator is an important part of the project and should be kept up to date with any changes required to support a firmware and the submodule should if possible point to a commit that works with the corresponding firmware version.
 
