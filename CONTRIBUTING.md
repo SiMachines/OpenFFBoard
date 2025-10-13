@@ -29,8 +29,6 @@ To create a new release:
 
 A release is triggered automatically when a new version section is added to CHANGELOG.md and pushed to master.
 
-**Important**: The version section MUST follow the exact format "### Changes in X.X:" or "### Changes in X.X.X:" (not "### Changes this version:" or any other variation). The workflow uses this pattern to extract the version number.
-
 ### Submodules
 The configurator is an important part of the project and should be kept up to date with any changes required to support a firmware and the submodule should if possible point to a commit that works with the corresponding firmware version.
 
