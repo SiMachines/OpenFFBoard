@@ -1,4 +1,4 @@
-### Changes in 1.17:
+### Changes in 1.16.1:
 - Reformatted USB serial string as hex and added command to request UID as hex string
 - Added device name to USB Product name
 - Added support for F407 OTP section
