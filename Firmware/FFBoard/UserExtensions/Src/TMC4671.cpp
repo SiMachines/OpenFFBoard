@@ -2784,13 +2784,13 @@ void TMC4671::setHwType(TMC_HW_Ver type){
 			.thermistor_R = 22000,
 			.thermistor_Beta = 4300,
 			.temperatureEnabled = true,
-			.temp_limit = 90,
-			.currentScaler = 2.5 / (0x7fff * 60.0 * 0.0015), // w. 60x 1.5mOhm sensor
+			.temp_limit = 65,
+			.currentScaler = 2.5 / (0x7fff * 50.0 * 0.0015), // w. 60x 1.5mOhm sensor
 			.brakeLimLow = 50700,
 			.brakeLimHigh = 50900,
 			.vmScaler = (2.5 / 0x7fff) * ((1.5+71.5)/1.5),
 			.vSenseMult = VOLTAGE_MULT_DEFAULT,
-			.bbm = 20
+			.bbm = 50
 		};
 		this->conf.hwconf = newHwConf;
 		// Activates around 60V as last resort failsave. Check offsets from tmc leakage. ~ 1.426V
