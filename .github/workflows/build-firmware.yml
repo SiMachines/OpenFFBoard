@@ -13,8 +13,23 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a release after building'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
   # Can be called
   workflow_call:
+    inputs:
+      create_release:
+        description: 'Create a release after building'
+        required: false
+        default: 'false'
+        type: string
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # Build firmware
@@ -40,6 +55,46 @@ jobs:
           name: OpenFFBoard-Firmware-${{ matrix.target }}
           path: ./Firmware/Output
 
+  Release:
+    needs: [Build_firmware]
+    name: Create release
+    runs-on: ubuntu-latest
+    if: inputs.create_release == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      # Download artifacts for release
+      - uses: actions/download-artifact@v4
+        with:
+          path: etc/usr/artifacts/
+
+      - name: Copy firmware readme
+        run: cp -u ${{ github.workspace }}/Firmware/Targets/README_FIRMWARE.md etc/usr/artifacts/README.md
+
+      - name: Zip firmware
+        run: zip -qq -r Firmware.zip OpenFFBoard-Firmware-* README.md
+        working-directory: etc/usr/artifacts/
+
+      - name: Make changelog
+        run: |
+          echo -e "### Firmware changes\n" > /tmp/CHANGELOG.md
+          cat ${{ github.workspace }}/CHANGELOG.md >> /tmp/CHANGELOG.md
+
+      - name: Get timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+
+      # Create release
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "OpenFFBoard Firmware Build ${{ steps.timestamp.outputs.timestamp }}"
+          tag_name: "build-${{ steps.timestamp.outputs.timestamp }}"
+          body_path: /tmp/CHANGELOG.md
+          files: etc/usr/artifacts/*.zip
+          draft: false
+          prerelease: true
+
   # Release:
   #   needs: [Build_firmware] # Requires build first
   #   name: Release if tagged
@@ -50,6 +105,7 @@ jobs:
   #     - uses: actions/download-artifact@v3
   #       with:
   #         path: etc/usr/artifacts/
+
 
   #     - name: Display structure of downloaded files
   #       run: ls -R
