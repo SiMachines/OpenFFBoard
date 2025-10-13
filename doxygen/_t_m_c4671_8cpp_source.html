@@ -2975,13 +2975,13 @@ $(function(){initNavTree('_t_m_c4671_8cpp_source.html',''); initResizable(true);
 <div class="line"><a id="l02784" name="l02784"></a><span class="lineno"> 2784</span>            .thermistor_R = 22000,</div>
 <div class="line"><a id="l02785" name="l02785"></a><span class="lineno"> 2785</span>            .thermistor_Beta = 4300,</div>
 <div class="line"><a id="l02786" name="l02786"></a><span class="lineno"> 2786</span>            .temperatureEnabled = <span class="keyword">true</span>,</div>
-<div class="line"><a id="l02787" name="l02787"></a><span class="lineno"> 2787</span>            .temp_limit = 90,</div>
-<div class="line"><a id="l02788" name="l02788"></a><span class="lineno"> 2788</span>            .currentScaler = 2.5 / (0x7fff * 60.0 * 0.0015), <span class="comment">// w. 60x 1.5mOhm sensor</span></div>
+<div class="line"><a id="l02787" name="l02787"></a><span class="lineno"> 2787</span>            .temp_limit = 65,</div>
+<div class="line"><a id="l02788" name="l02788"></a><span class="lineno"> 2788</span>            .currentScaler = 2.5 / (0x7fff * 50.0 * 0.0015), <span class="comment">// w. 60x 1.5mOhm sensor</span></div>
 <div class="line"><a id="l02789" name="l02789"></a><span class="lineno"> 2789</span>            .brakeLimLow = 50700,</div>
 <div class="line"><a id="l02790" name="l02790"></a><span class="lineno"> 2790</span>            .brakeLimHigh = 50900,</div>
 <div class="line"><a id="l02791" name="l02791"></a><span class="lineno"> 2791</span>            .vmScaler = (2.5 / 0x7fff) * ((1.5+71.5)/1.5),</div>
 <div class="line"><a id="l02792" name="l02792"></a><span class="lineno"> 2792</span>            .<a class="code hl_variable" href="voltagesense_8cpp.html#acf38394d2feb220b610d8e23521fcd4b">vSenseMult</a> = VOLTAGE_MULT_DEFAULT,</div>
-<div class="line"><a id="l02793" name="l02793"></a><span class="lineno"> 2793</span>            .bbm = 20</div>
+<div class="line"><a id="l02793" name="l02793"></a><span class="lineno"> 2793</span>            .bbm = 50</div>
 <div class="line"><a id="l02794" name="l02794"></a><span class="lineno"> 2794</span>        };</div>
 <div class="line"><a id="l02795" name="l02795"></a><span class="lineno"> 2795</span>        this-&gt;<a class="code hl_variable" href="class_t_m_c4671.html#a71f292d9a5ce7fc529ba29bd2fd22fc5">conf</a>.hwconf = newHwConf;</div>
 <div class="line"><a id="l02796" name="l02796"></a><span class="lineno"> 2796</span>        <span class="comment">// Activates around 60V as last resort failsave. Check offsets from tmc leakage. ~ 1.426V</span></div>
