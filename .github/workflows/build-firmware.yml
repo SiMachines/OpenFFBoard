@@ -15,6 +15,7 @@ on:
   workflow_dispatch:
   # Can be called
   workflow_call:
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # Build firmware
