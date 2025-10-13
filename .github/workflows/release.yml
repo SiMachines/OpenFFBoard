@@ -6,8 +6,6 @@ on:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
       # Branch filtering is not possible when triggerd by tags!
-    branches:
-      - master  # Also trigger on pushes to master branch
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
