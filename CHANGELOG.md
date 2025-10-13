@@ -1,8 +1,9 @@
-### Changes this version:
+### Changes in 1.16.1:
 - Reformatted USB serial string as hex and added command to request UID as hex string
 - Added device name to USB Product name
 - Added support for F407 OTP section
 - Added support for MagnTek MT6835 via SPI (SPI3 port, MagnTek encoder class)
+- Adjusted TMC4671 current scaler values and BBM (break-before-make) settings for improved motor control
 
 ### Changes in 1.16:
 
