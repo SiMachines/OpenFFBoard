@@ -20,14 +20,14 @@ Changes should be added in the CHANGELOG.md file.
 This will be used to generate release notes.
 
 The release workflow runs automatically on every push to master to verify that releases can be built successfully.
-However, a GitHub release is only created when a tagged commit (v1.x.x) is pushed. A tag with a "-" (v1.x.x-beta) generates a prerelease.
+When pushing to master, if a new version is detected in CHANGELOG.md, a GitHub release is automatically created. A tag with a "-" (e.g., v1.x.x-beta) generates a prerelease.
 
 To create a new release:
-1. Update CHANGELOG.md with the changes
+1. Update CHANGELOG.md with the changes in a new version section (e.g., "### Changes in 1.17:")
 2. Commit and push to master
-3. Create and push a tag: `git tag v1.x.x && git push origin v1.x.x`
+3. The workflow will automatically create a tag and release based on the version in CHANGELOG.md
 
-A release is triggered when changes are deemed ready for public use.
+A release is triggered automatically when a new version section is added to CHANGELOG.md and pushed to master.
 
 ### Submodules
 The configurator is an important part of the project and should be kept up to date with any changes required to support a firmware and the submodule should if possible point to a commit that works with the corresponding firmware version.
