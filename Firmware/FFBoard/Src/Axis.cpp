@@ -13,6 +13,7 @@
 #include "ODriveCAN.h"
 #include "MotorSimplemotion.h"
 #include "RmdMotorCAN.h"
+#include "critical.hpp"
 
 //////////////////////////////////////////////
 /*
@@ -282,8 +283,9 @@ uint8_t Axis::getEncType(){
 void Axis::setPos(uint16_t val)
 {
 	startForceFadeIn(0.25,0.5);
-	if(this->drv != nullptr){
-		drv->getEncoder()->setPos(val);
+	Encoder* enc_p = getEncoder();
+	if(enc_p != nullptr){
+		enc_p->setPos(val);
 	}
 }
 
@@ -292,6 +294,7 @@ MotorDriver* Axis::getDriver(){
 }
 
 Encoder* Axis::getEncoder(){
+	if(!drv) return nullptr;
 	return drv->getEncoder();
 }
 
@@ -306,7 +309,7 @@ void Axis::prepareForUpdate(){
 
 	//if (!drv->motorReady()) return;
 
-	float angle = getEncAngle(this->drv->getEncoder());
+	float angle = getEncAngle(getEncoder());
 
 	// Scale encoder value to set rotation range
 	// Update a change of range only when new range is within valid range
@@ -394,13 +397,13 @@ void Axis::setDrvType(uint8_t drvtype)
 	{
 		return;
 	}
-	this->drv.reset(nullptr);
-	MotorDriver* drv = drv_chooser.Create((uint16_t)drvtype);
+	cpp_freertos::CriticalSection::Enter();
+	this->drv.reset(drv_chooser.Create((uint16_t)drvtype));
 	if (drv == nullptr)
 	{
+		cpp_freertos::CriticalSection::Exit();
 		return;
 	}
-	this->drv = std::unique_ptr<MotorDriver>(drv);
 	this->conf.drvtype = drvtype;
 
 	// Pass encoder to driver again
@@ -408,7 +411,7 @@ void Axis::setDrvType(uint8_t drvtype)
 		this->drv->setEncoder(this->enc);
 	}
 #ifdef TMC4671DRIVER
-	if (dynamic_cast<TMC4671 *>(drv))
+	if (dynamic_cast<TMC4671 *>(drv.get()))
 	{
 		setupTMC4671();
 	}
@@ -422,6 +425,7 @@ void Axis::setDrvType(uint8_t drvtype)
 	{
 		drv->startMotor();
 	}
+	cpp_freertos::CriticalSection::Exit();
 }
 
 #ifdef TMC4671DRIVER
@@ -461,7 +465,7 @@ void Axis::setEncType(uint8_t enctype)
 		this->conf.enctype = 0; // None encoder
 	}
 
-	float angle = getEncAngle(this->drv->getEncoder());
+	float angle = getEncAngle(this->getEncoder());
 	//int32_t scaledEnc = scaleEncValue(angle, degreesOfRotation);
 	// reset metrics
 	this->resetMetrics(angle);
@@ -939,14 +943,14 @@ CommandStatus Axis::command(const ParsedCommand& cmd,std::vector<CommandReply>& 
 		break;
 
 	case Axis_commands::pos:
-		if (cmd.type == CMDtype::get && this->drv->getEncoder() != nullptr)
+		if (cmd.type == CMDtype::get && getEncoder() != nullptr)
 		{
-			int32_t pos = this->drv->getEncoder()->getPos();
+			int32_t pos = getEncoder()->getPos();
 			replies.emplace_back(isInverted() ? -pos : pos);
 		}
-		else if (cmd.type == CMDtype::set && this->drv->getEncoder() != nullptr)
+		else if (cmd.type == CMDtype::set && getEncoder() != nullptr)
 		{
-			this->drv->getEncoder()->setPos(isInverted() ? -cmd.val : cmd.val);
+			getEncoder()->setPos(isInverted() ? -cmd.val : cmd.val);
 		}
 		else
 		{
@@ -1024,8 +1028,8 @@ CommandStatus Axis::command(const ParsedCommand& cmd,std::vector<CommandReply>& 
 		if (cmd.type == CMDtype::get)
 		{
 			uint32_t cpr = 0;
-			if(this->drv->getEncoder() != nullptr){
-				cpr = this->drv->getEncoder()->getCpr();
+			if(this->getEncoder() != nullptr){
+				cpr = this->getEncoder()->getCpr();
 			}
 //#ifdef TMC4671DRIVER // CPR should be consistent with position. Maybe change TMC to prescale to encoder count or correct readout in UI
 //			TMC4671 *tmcdrv = dynamic_cast<TMC4671 *>(this->drv.get()); // Special case for TMC. Get the actual encoder resolution
