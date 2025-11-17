@@ -23,7 +23,7 @@ std::array<uint8_t,256> MtEncoderSPI::tableCRC __attribute__((section (".ccmram"
 
 MtEncoderSPI::MtEncoderSPI() : SPIDevice(ENCODER_SPI_PORT,ENCODER_SPI_PORT.getFreeCsPins()[0]), CommandHandler("mtenc",CLSID_ENCODER_MTSPI,0),cpp_freertos::Thread("MTENC",256,42) {
 	MtEncoderSPI::inUse = true;
-	this->spiConfig.peripheral.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 4 = 10MHz 8 = 5MHz
+	this->spiConfig.peripheral.BaudRatePrescaler = spiPort.getClosestPrescaler(10e6).first; // 10MHz max
 	this->spiConfig.peripheral.FirstBit = SPI_FIRSTBIT_MSB;
 	this->spiConfig.peripheral.CLKPhase = SPI_PHASE_2EDGE;
 	this->spiConfig.peripheral.CLKPolarity = SPI_POLARITY_HIGH;
@@ -32,7 +32,7 @@ MtEncoderSPI::MtEncoderSPI() : SPIDevice(ENCODER_SPI_PORT,ENCODER_SPI_PORT.getFr
 	//Init CRC-8 table
 	makeCrcTable(tableCRC,POLY,8); // Mt6825, Poly X8+X2+X (+1)
 
-	restoreFlash();
+	restoreFlash(); // Also configures SPI port
 	spiPort.reserveCsPin(this->spiConfig.cs);
 
 	CommandHandler::registerCommands();
@@ -40,6 +40,7 @@ MtEncoderSPI::MtEncoderSPI() : SPIDevice(ENCODER_SPI_PORT,ENCODER_SPI_PORT.getFr
 	registerCommand("pos", MtEncoderSPI_commands::pos, "Position",CMDFLAG_GET | CMDFLAG_SET);
 	registerCommand("errors", MtEncoderSPI_commands::errors, "Parity error count",CMDFLAG_GET);
 	registerCommand("mode", MtEncoderSPI_commands::mode, "Encoder mode (MT6825=0;MT6835=1)",CMDFLAG_GET | CMDFLAG_SET | CMDFLAG_INFOSTRING);
+	registerCommand("speed", MtEncoderSPI_commands::speed, "SPI speed preset",CMDFLAG_GET | CMDFLAG_SET | CMDFLAG_INFOSTRING);
 	this->Start();
 }
 
@@ -51,14 +52,16 @@ MtEncoderSPI::~MtEncoderSPI() {
 void MtEncoderSPI::restoreFlash(){
 	uint16_t conf_int = Flash_ReadDefault(ADR_MTENC_CONF1, 0);
 	offset = Flash_ReadDefault(ADR_MTENC_OFS, 0) << 2;
-	uint8_t cspin = conf_int & 0xF;
+	uint8_t cspin = conf_int & 0x3;
 	MtEncoderSPI_mode mode = static_cast<MtEncoderSPI_mode>(conf_int >> 8);
 	setMode(mode);
 	setCsPin(cspin);
+	setSpiSpeed((conf_int >> 2) & 0x3);
 }
 
 void MtEncoderSPI::saveFlash(){
-	uint16_t conf_int = this->cspin & 0xF;
+	uint16_t conf_int = this->cspin & 0x3;
+	conf_int |= (this->spiSpeedPreset & 0x3) << 2;
 	conf_int |= ((uint8_t)mode & 0xf) << 8;
 	Flash_Write(ADR_MTENC_CONF1, conf_int);
 	Flash_Write(ADR_MTENC_OFS, offset >> 2);
@@ -262,6 +265,15 @@ void MtEncoderSPI::setMode(MtEncoderSPI::MtEncoderSPI_mode mode){
 	this->overspeed = false;
 }
 
+void MtEncoderSPI::setSpiSpeed(uint8_t preset){
+	if(preset == spiSpeedPreset){
+		return; // Ignore if no change
+	}
+	spiSpeedPreset = clip<uint8_t,uint8_t>(preset,0,spispeeds.size());
+	this->spiConfig.peripheral.BaudRatePrescaler = spiPort.getClosestPrescaler(spispeeds[spiSpeedPreset]).first;
+	initSPI();
+}
+
 
 CommandStatus MtEncoderSPI::command(const ParsedCommand& cmd,std::vector<CommandReply>& replies){
 	switch(static_cast<MtEncoderSPI_commands>(cmd.cmdId)){
@@ -298,6 +310,22 @@ CommandStatus MtEncoderSPI::command(const ParsedCommand& cmd,std::vector<Command
 			return CommandStatus::ERR;
 		}
 		break;
+
+	case MtEncoderSPI_commands::speed:
+	{
+		if(cmd.type == CMDtype::get){
+			replies.emplace_back(spiSpeedPreset);
+		}else if(cmd.type == CMDtype::set){
+			setSpiSpeed(cmd.val);
+		}else if(cmd.type == CMDtype::info){
+			for(uint8_t i = 0; i<spispeeds.size();i++){
+				replies.emplace_back(std::to_string(this->spiPort.getClosestPrescaler(spispeeds[i]).second)  + ":" + std::to_string(i)+"\n");
+			}
+		}else{
+			return CommandStatus::ERR;
+		}
+		break;
+	}
 	default:
 		return CommandStatus::NOT_FOUND;
 	}
